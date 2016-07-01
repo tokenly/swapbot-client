@@ -21,14 +21,32 @@ class SwapbotClient
 
 
     /**
-     * gets info for a particular asset
-     * @param string $asset counterparty asset
+     * gets all the available swaps
+     *
+     * May make multiple requests
      * @return array
      * */
     public function getAvailableSwaps()
     {
-        $result = $this->newAPIRequest('GET', '/public/availableswaps');
-        return $result;
+        $pg = 0;
+        $limit = 100;
+
+        $safety = 20;
+        $done = false;
+        $all_swaps = [];
+        while (!$done) {
+            $result = $this->newAPIRequest('GET', '/public/availableswaps', ['limit' => $limit, 'pg' => $pg]);
+            if (!$result) { $done = true; break; }
+            $all_swaps = array_merge($all_swaps, $result);
+            if (count($result) < $limit) { $done = true; break; }
+            ++$pg;
+
+            if (--$safety <= 0) {
+                break;
+            }
+        }
+
+        return $all_swaps;
     }
 
 
